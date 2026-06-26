@@ -145,12 +145,15 @@ function Avatar({ profile, size, online }: { profile: Profile; size: number; onl
       </div>
       {online !== undefined && (
         <div style={{
-          position: 'absolute', bottom: 1, right: 1,
-          width: size * 0.25, height: size * 0.25,
+          position: 'absolute',
+          bottom: -1, right: -1,
+          width: 13, height: 13,
           borderRadius: '50%',
-          background: online ? '#22C55E' : 'rgba(255,255,255,0.15)',
-          border: '2px solid #0A1535',
-          transition: 'background 0.3s',
+          background: online ? '#22C55E' : 'rgba(255,255,255,0.18)',
+          border: '2.5px solid #0A1535',
+          zIndex: 2,
+          transition: 'background 0.4s',
+          boxShadow: online ? '0 0 0 2px rgba(34,197,94,0.25)' : 'none',
         }} />
       )}
     </div>
@@ -313,27 +316,31 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
               style={{ maxWidth: '240px', maxHeight: '240px', objectFit: 'cover', borderRadius: '12px', display: 'block', cursor: 'pointer' }}
             />
           )}
-          {/* Texte + timestamp sur la même ligne (inline) */}
+          {/* Texte + timestamp : layout identique à WhatsApp/iMessage */}
           {msg.content && (
-            <div style={{ margin: msg.image_url ? '0.4rem 0 0' : 0 }}>
-              <span style={{
-                fontSize: '0.88rem', lineHeight: 1.55,
-                wordBreak: 'break-word',
-                whiteSpace: 'pre-wrap',
-              }}>
+            <div style={{ margin: msg.image_url ? '0.4rem 0 0' : 0, lineHeight: 1.55 }}>
+              <span style={{ fontSize: '0.88rem', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                 {msg.content}
               </span>
-              {/* Espace + timestamp inline — suit le texte sur la même ligne si assez de place */}
+              {/* Fantôme invisible qui réserve la place du timestamp sur la dernière ligne */}
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '3px',
-                verticalAlign: 'bottom',
-                marginLeft: '6px',
-                whiteSpace: 'nowrap',
-                lineHeight: 1,
-                position: 'relative', top: '1px',
+                visibility: 'hidden', fontSize: '0.6rem',
+                marginLeft: '6px', verticalAlign: 'bottom',
+                userSelect: 'none', pointerEvents: 'none',
+              }} aria-hidden>
+                00:00{mine && !isOptimistic && <StatusIcon status={msg.status} />}
+              </span>
+              {/* Vrai timestamp positionné en bas à droite par float */}
+              <span style={{
+                float: 'right',
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                marginLeft: '4px', marginTop: '2px',
+                verticalAlign: 'bottom', lineHeight: 1,
+                clear: 'none',
               }}>
-                {msg.edited_at && <span style={{ fontSize: '0.55rem', opacity: 0.4 }}>modifié</span>}
-                <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>
+                {msg.edited_at && <span style={{ fontSize: '0.55rem', opacity: 0.4, color: mine ? '#0D1B4B' : 'inherit' }}>modifié</span>}
+                <span style={{ fontSize: '0.6rem', opacity: 0.5, whiteSpace: 'nowrap' }}>
                   {isOptimistic ? '…' : fmt(msg.created_at)}
                 </span>
                 {mine && !isOptimistic && <StatusIcon status={msg.status} />}
