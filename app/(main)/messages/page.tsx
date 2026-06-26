@@ -29,7 +29,7 @@ interface UserPresence {
 ───────────────────────────────────────────── */
 const PAGE_SIZE = 50
 const PRESENCE_INTERVAL = 20_000
-const ONLINE_THRESHOLD  = 60_000
+const ONLINE_THRESHOLD  = 120_000   // 2 min de marge (heartbeat = 20s)
 
 /* ─────────────────────────────────────────────
    HELPERS
@@ -313,30 +313,31 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
               style={{ maxWidth: '240px', maxHeight: '240px', objectFit: 'cover', borderRadius: '12px', display: 'block', cursor: 'pointer' }}
             />
           )}
-          {/* Texte + meta sur la même ligne grâce au float trick */}
+          {/* Texte + timestamp sur la même ligne (inline) */}
           {msg.content && (
-            <div style={{ position: 'relative' }}>
-              <p style={{
-                margin: msg.image_url ? '0.4rem 0 0' : 0,
+            <div style={{ margin: msg.image_url ? '0.4rem 0 0' : 0 }}>
+              <span style={{
                 fontSize: '0.88rem', lineHeight: 1.55,
                 wordBreak: 'break-word',
-                // Espace réservé à droite pour le timestamp inline
-                paddingRight: mine ? '72px' : '52px',
+                whiteSpace: 'pre-wrap',
               }}>
                 {msg.content}
-              </p>
-              {/* Timestamp + statut flottant en bas à droite du texte */}
-              <div style={{
-                position: 'absolute', bottom: 0, right: 0,
-                display: 'flex', alignItems: 'center', gap: '3px',
+              </span>
+              {/* Espace + timestamp inline — suit le texte sur la même ligne si assez de place */}
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                verticalAlign: 'bottom',
+                marginLeft: '6px',
+                whiteSpace: 'nowrap',
                 lineHeight: 1,
+                position: 'relative', top: '1px',
               }}>
                 {msg.edited_at && <span style={{ fontSize: '0.55rem', opacity: 0.4 }}>modifié</span>}
-                <span style={{ fontSize: '0.6rem', opacity: 0.5, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>
                   {isOptimistic ? '…' : fmt(msg.created_at)}
                 </span>
                 {mine && !isOptimistic && <StatusIcon status={msg.status} />}
-              </div>
+              </span>
             </div>
           )}
           {/* Image sans texte : timestamp en dessous */}
@@ -461,7 +462,12 @@ function MessagesContent() {
       const { data } = await supabase.from('user_presence').select('*')
       if (data) {
         const map: Record<string, UserPresence> = {}
-        data.forEach(p => { map[p.user_id] = p })
+        data.forEach(p => {
+          map[p.user_id] = {
+            ...p,
+            is_online: p.is_online === true || (p.is_online as unknown) === 'true',
+          }
+        })
         setPresence(map)
       }
     }
@@ -471,7 +477,13 @@ function MessagesContent() {
     const ch = supabase.channel('presence-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_presence' }, payload => {
         const rec = payload.new as UserPresence
-        if (rec) setPresence(prev => ({ ...prev, [rec.user_id]: rec }))
+        if (rec) {
+          const normalized: UserPresence = {
+            ...rec,
+            is_online: rec.is_online === true || (rec.is_online as unknown) === 'true',
+          }
+          setPresence(prev => ({ ...prev, [rec.user_id]: normalized }))
+        }
       })
       .subscribe()
 
@@ -659,7 +671,9 @@ function MessagesContent() {
   const activeConv    = conversations.find(c => c.id === activeId)
   const otherUser     = activeConv?.other_user
   const otherPresence = otherUser ? presence[otherUser.id] : undefined
-  const isOnline      = !!(otherPresence?.is_online && (Date.now() - new Date(otherPresence.last_seen).getTime()) < ONLINE_THRESHOLD)
+  const isOnline = otherPresence
+    ? (otherPresence.is_online === true && (Date.now() - new Date(otherPresence.last_seen).getTime()) < ONLINE_THRESHOLD)
+    : false
   const grouped       = groupByDay(messages)
 
   /* ══════ CHAT VIEW ══════ */
@@ -778,7 +792,10 @@ function MessagesContent() {
         ) : (
           conversations.map(conv => {
             const pres   = conv.other_user ? presence[conv.other_user.id] : undefined
-            const online = !!(pres?.is_online && (Date.now() - new Date(pres.last_seen).getTime()) < ONLINE_THRESHOLD)
+            // false si pas de données encore (affiche point gris), true si en ligne
+            const online = pres
+              ? (pres.is_online === true && (Date.now() - new Date(pres.last_seen).getTime()) < ONLINE_THRESHOLD)
+              : false
             return <ConvRow key={conv.id} conv={conv} active={conv.id === activeId} onClick={() => openConv(conv.id)} online={online} />
           })
         )}
