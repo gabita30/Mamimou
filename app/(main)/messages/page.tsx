@@ -452,15 +452,29 @@ function MessagesContent() {
     return () => { supabase.removeChannel(ch) }
   }, [userId, loadConversations])
 
-  /* ── Realtime : presence ── */
+  /* ── Presence : chargement initial + realtime ── */
   useEffect(() => {
     if (!userId) return
+
+    // 1. Charger toutes les présences existantes immédiatement
+    const loadPresence = async () => {
+      const { data } = await supabase.from('user_presence').select('*')
+      if (data) {
+        const map: Record<string, UserPresence> = {}
+        data.forEach(p => { map[p.user_id] = p })
+        setPresence(map)
+      }
+    }
+    loadPresence()
+
+    // 2. Écouter les changements en temps réel
     const ch = supabase.channel('presence-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_presence' }, payload => {
         const rec = payload.new as UserPresence
         if (rec) setPresence(prev => ({ ...prev, [rec.user_id]: rec }))
       })
       .subscribe()
+
     return () => { supabase.removeChannel(ch) }
   }, [userId])
 
