@@ -69,19 +69,10 @@ export default function SignupPage() {
       return
     }
 
-    // ── Marquer en ligne dès l'inscription avec la session fraîche ──
+    // ── Trigger SQL s'en charge automatiquement à l'INSERT profiles ──
+    // Mais on force aussi via RPC au cas où la session est disponible
     if (data.session) {
-      const { error: presenceErr } = await supabase
-        .from('user_presence')
-        .upsert(
-          {
-            user_id: data.user.id,
-            is_online: true,
-            last_seen: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        )
-      if (presenceErr) console.warn('[Presence] upsert error:', presenceErr.message)
+      await supabase.rpc('set_online', { p_user_id: data.user.id })
     }
 
     router.push('/feed')
