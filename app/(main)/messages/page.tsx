@@ -455,13 +455,22 @@ function MessagesContent() {
       })
 
     // Garder aussi le heartbeat postgres pour last_seen
-    const upsert = () => supabase.from('user_presence')
-      .upsert({ user_id: userId, is_online: true, last_seen: new Date().toISOString() })
+    const upsert = async () => {
+      const { error } = await supabase.from('user_presence')
+        .upsert(
+          { user_id: userId, is_online: true, last_seen: new Date().toISOString() },
+          { onConflict: 'user_id' }   // clé primaire explicite pour le upsert
+        )
+      if (error) console.error('[Presence upsert error]', error)
+    }
     upsert()
     const interval = setInterval(upsert, PRESENCE_INTERVAL)
     const handleUnload = () => {
       presenceChannel.untrack()
-      supabase.from('user_presence').upsert({ user_id: userId, is_online: false, last_seen: new Date().toISOString() })
+      supabase.from('user_presence').upsert(
+        { user_id: userId, is_online: false, last_seen: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
     }
     window.addEventListener('beforeunload', handleUnload)
 
