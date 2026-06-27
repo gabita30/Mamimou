@@ -25,7 +25,12 @@ export default function LoginPage() {
     }
 
     // ── Marquer en ligne via RPC SECURITY DEFINER (droits postgres) ──
-    await supabase.rpc('set_online', { p_user_id: data.session.user.id })
+    const { error: rpcErr } = await supabase.rpc('set_online', { p_user_id: data.session.user.id })
+    if (rpcErr) {
+      console.error('[set_online error]', rpcErr.code, rpcErr.message, rpcErr.details, rpcErr.hint)
+    } else {
+      console.log('[set_online] OK pour', data.session.user.id)
+    }
 
     router.push('/feed')
   }
