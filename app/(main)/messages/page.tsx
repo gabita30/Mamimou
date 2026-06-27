@@ -397,6 +397,7 @@ function MessagesContent() {
   const [hasMore,       setHasMore]       = useState(false)
   const [loadingMore,   setLoadingMore]   = useState(false)
   const [presence,      setPresence]      = useState<Record<string, UserPresence>>({})
+  const [onlineUsers,   setOnlineUsers]   = useState<Set<string>>(new Set())
   const [replyTo,       setReplyTo]       = useState<ExtMessage | null>(null)
   const [isTyping,      setIsTyping]      = useState(false)
   const [otherTyping,   setOtherTyping]   = useState(false)
@@ -416,15 +417,60 @@ function MessagesContent() {
     })
   }, [])
 
-  /* ── Presence heartbeat ── */
+  /* ── Presence : Supabase Realtime Presence (WebSocket natif, instantané) ── */
   useEffect(() => {
     if (!userId) return
-    const upsert = () => supabase.from('user_presence').upsert({ user_id: userId, is_online: true, last_seen: new Date().toISOString() })
+
+    const presenceChannel = supabase.channel('global-presence', {
+      config: { presence: { key: userId } },
+    })
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState<{ user_id: string }>()
+        const online = new Set<string>()
+        Object.values(state).forEach(presences => {
+          presences.forEach((p: { user_id: string }) => online.add(p.user_id))
+        })
+        setOnlineUsers(online)
+      })
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        setOnlineUsers(prev => {
+          const next = new Set(prev)
+          newPresences.forEach((p: { user_id: string }) => next.add(p.user_id))
+          return next
+        })
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        setOnlineUsers(prev => {
+          const next = new Set(prev)
+          leftPresences.forEach((p: { user_id: string }) => next.delete(p.user_id))
+          return next
+        })
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ user_id: userId })
+        }
+      })
+
+    // Garder aussi le heartbeat postgres pour last_seen
+    const upsert = () => supabase.from('user_presence')
+      .upsert({ user_id: userId, is_online: true, last_seen: new Date().toISOString() })
     upsert()
     const interval = setInterval(upsert, PRESENCE_INTERVAL)
-    const handleUnload = () => supabase.from('user_presence').upsert({ user_id: userId, is_online: false, last_seen: new Date().toISOString() })
+    const handleUnload = () => {
+      presenceChannel.untrack()
+      supabase.from('user_presence').upsert({ user_id: userId, is_online: false, last_seen: new Date().toISOString() })
+    }
     window.addEventListener('beforeunload', handleUnload)
-    return () => { clearInterval(interval); window.removeEventListener('beforeunload', handleUnload); handleUnload() }
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('beforeunload', handleUnload)
+      presenceChannel.untrack()
+      supabase.removeChannel(presenceChannel)
+    }
   }, [userId])
 
   /* ── Load conversations ── */
@@ -678,9 +724,9 @@ function MessagesContent() {
   const activeConv    = conversations.find(c => c.id === activeId)
   const otherUser     = activeConv?.other_user
   const otherPresence = otherUser ? presence[otherUser.id] : undefined
-  const isOnline = otherPresence
-    ? (otherPresence.is_online === true && (Date.now() - new Date(otherPresence.last_seen).getTime()) < ONLINE_THRESHOLD)
-    : false
+  // onlineUsers = source WebSocket temps réel (prioritaire)
+  // otherPresence = fallback postgres pour last_seen
+  const isOnline = otherUser ? onlineUsers.has(otherUser.id) : false
   const grouped       = groupByDay(messages)
 
   /* ══════ CHAT VIEW ══════ */
@@ -799,10 +845,8 @@ function MessagesContent() {
         ) : (
           conversations.map(conv => {
             const pres   = conv.other_user ? presence[conv.other_user.id] : undefined
-            // false si pas de données encore (affiche point gris), true si en ligne
-            const online = pres
-              ? (pres.is_online === true && (Date.now() - new Date(pres.last_seen).getTime()) < ONLINE_THRESHOLD)
-              : false
+            // Source WebSocket temps réel
+            const online = conv.other_user ? onlineUsers.has(conv.other_user.id) : false
             return <ConvRow key={conv.id} conv={conv} active={conv.id === activeId} onClick={() => openConv(conv.id)} online={online} />
           })
         )}
