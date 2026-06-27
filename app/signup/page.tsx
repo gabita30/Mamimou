@@ -19,16 +19,9 @@ export default function SignupPage() {
   const [error, setError] = useState('')
 
   const [form, setForm] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    username: '',
-    first_name: '',
-    last_name: '',
-    gender: 'female',
-    bio: '',
-    is_public: true,
-    adult: false,
+    email: '', password: '', confirmPassword: '',
+    username: '', first_name: '', last_name: '',
+    gender: 'female', bio: '', is_public: true, adult: false,
   })
 
   const set = (key: string, value: string | boolean) =>
@@ -55,7 +48,7 @@ export default function SignupPage() {
     })
 
     if (signUpError || !data.user) {
-      setError(signUpError?.message ?? 'Erreur lors de l\'inscription.')
+      setError(signUpError?.message ?? "Erreur lors de l'inscription.")
       setLoading(false)
       return
     }
@@ -76,6 +69,21 @@ export default function SignupPage() {
       return
     }
 
+    // ── Marquer en ligne dès l'inscription avec la session fraîche ──
+    if (data.session) {
+      const { error: presenceErr } = await supabase
+        .from('user_presence')
+        .upsert(
+          {
+            user_id: data.user.id,
+            is_online: true,
+            last_seen: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        )
+      if (presenceErr) console.warn('[Presence] upsert error:', presenceErr.message)
+    }
+
     router.push('/feed')
   }
 
@@ -83,18 +91,13 @@ export default function SignupPage() {
     <main style={{
       minHeight: '100vh',
       background: 'linear-gradient(140deg, #0a1535 0%, #0D1B4B 40%, #12204f 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.5rem',
-      position: 'relative',
-      overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '1.5rem', position: 'relative', overflow: 'hidden',
     }}>
       <div style={{ position: 'fixed', top: '5%', left: '10%', width: '280px', height: '280px', background: 'radial-gradient(circle, rgba(232,180,192,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '8%', right: '5%', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: '440px' }}>
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.12em' }}>
             Désirs
@@ -104,7 +107,6 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Step indicator */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
           {[1, 2].map(s => (
             <div key={s} style={{ width: s === step ? '32px' : '8px', height: '8px', borderRadius: '4px', background: s === step ? '#C9A84C' : s < step ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.15)', transition: 'all 0.3s' }} />
@@ -112,23 +114,20 @@ export default function SignupPage() {
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '28px', padding: '2.5rem 2rem' }}>
-          <form onSubmit={step === 1 ? (e) => { e.preventDefault(); setError(''); if (form.password !== form.confirmPassword) { setError('Mots de passe différents.'); return } setStep(2) } : handleSignup}>
-
+          <form onSubmit={step === 1
+            ? (e) => { e.preventDefault(); setError(''); if (form.password !== form.confirmPassword) { setError('Mots de passe différents.'); return } setStep(2) }
+            : handleSignup
+          }>
             {step === 1 && (
               <>
                 <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, margin: '0 0 2rem', color: 'rgba(255,255,255,0.9)' }}>
                   Accès & sécurité
                 </h2>
-
                 <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" placeholder="vous@exemple.com" required />
                 <Field label="Mot de passe" value={form.password} onChange={v => set('password', v)} type="password" placeholder="Min. 8 caractères" required />
                 <Field label="Confirmer le mot de passe" value={form.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••" required />
-
                 {error && <ErrorBox msg={error} />}
-
-                <button type="submit" style={btnGold}>
-                  Continuer →
-                </button>
+                <button type="submit" style={btnGold}>Continuer →</button>
               </>
             )}
 
@@ -137,7 +136,6 @@ export default function SignupPage() {
                 <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, margin: '0 0 2rem', color: 'rgba(255,255,255,0.9)' }}>
                   Mon identité
                 </h2>
-
                 <Field label="Pseudo" value={form.username} onChange={v => set('username', v)} placeholder="@monpseudo" />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                   <div>
@@ -159,24 +157,14 @@ export default function SignupPage() {
 
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={lbl}>Bio</label>
-                  <textarea
-                    value={form.bio}
-                    onChange={e => set('bio', e.target.value)}
-                    rows={3}
-                    placeholder="Quelques mots sur vous…"
-                    style={{ ...inp, resize: 'vertical', fontFamily: "'Jost', sans-serif" }}
-                    onFocus={focusBorder}
-                    onBlur={blurBorder}
-                  />
+                  <textarea value={form.bio} onChange={e => set('bio', e.target.value)} rows={3} placeholder="Quelques mots sur vous…" style={{ ...inp, resize: 'vertical', fontFamily: "'Jost', sans-serif" }} onFocus={focusBorder} onBlur={blurBorder} />
                 </div>
 
-                {/* Public toggle */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '0.875rem 1rem', marginBottom: '1.25rem' }}>
                   <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>Profil public</span>
                   <Toggle value={form.is_public} onChange={v => set('is_public', v)} />
                 </div>
 
-                {/* 18+ checkbox */}
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
                   <input type="checkbox" checked={form.adult} onChange={e => set('adult', e.target.checked)} style={{ marginTop: '2px', accentColor: '#C9A84C', width: '16px', height: '16px', flexShrink: 0 }} />
                   <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
@@ -187,9 +175,7 @@ export default function SignupPage() {
                 {error && <ErrorBox msg={error} />}
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button type="button" onClick={() => setStep(1)} style={{ ...btnGhost, flex: '0 0 auto' }}>
-                    ←
-                  </button>
+                  <button type="button" onClick={() => setStep(1)} style={{ ...btnGhost, flex: '0 0 auto' }}>←</button>
                   <button type="submit" disabled={loading} style={{ ...btnGold, flex: 1 }}>
                     {loading ? 'Création…' : 'Rejoindre Désirs'}
                   </button>
@@ -200,17 +186,13 @@ export default function SignupPage() {
 
           <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
             Déjà membre ?{' '}
-            <Link href="/login" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>
-              Se connecter
-            </Link>
+            <Link href="/login" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>Se connecter</Link>
           </p>
         </div>
       </div>
     </main>
   )
 }
-
-/* ── Sub-components ── */
 
 function Field({ label, value, onChange, type = 'text', placeholder, required }: {
   label: string; value: string; onChange: (v: string) => void
@@ -219,7 +201,8 @@ function Field({ label, value, onChange, type = 'text', placeholder, required }:
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <label style={lbl}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} required={required}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} required={required}
         style={inp} onFocus={focusBorder} onBlur={blurBorder} />
     </div>
   )
@@ -240,8 +223,6 @@ function ErrorBox({ msg }: { msg: string }) {
     </div>
   )
 }
-
-/* ── Shared styles ── */
 
 const lbl: React.CSSProperties = {
   display: 'block', fontSize: '0.68rem', letterSpacing: '0.18em',
@@ -273,5 +254,4 @@ const btnGhost: React.CSSProperties = {
   background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
   color: 'white', fontWeight: 500, fontSize: '1rem', padding: '0.9rem 1.25rem',
   borderRadius: '14px', cursor: 'pointer', fontFamily: "'Jost', sans-serif",
-      }
-    
+}
