@@ -24,19 +24,8 @@ export default function LoginPage() {
       return
     }
 
-    // ── Marquer en ligne avec le token frais de la session ──
-    const { error: presenceErr } = await supabase
-      .from('user_presence')
-      .upsert(
-        {
-          user_id: data.session.user.id,
-          is_online: true,
-          last_seen: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' }
-      )
-
-    if (presenceErr) console.warn('[Presence] upsert error:', presenceErr.message)
+    // ── Marquer en ligne via RPC SECURITY DEFINER (droits postgres) ──
+    await supabase.rpc('set_online', { p_user_id: data.session.user.id })
 
     router.push('/feed')
   }
