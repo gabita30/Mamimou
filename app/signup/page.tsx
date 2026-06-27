@@ -72,7 +72,12 @@ export default function SignupPage() {
     // ── Trigger SQL s'en charge automatiquement à l'INSERT profiles ──
     // Mais on force aussi via RPC au cas où la session est disponible
     if (data.session) {
-      await supabase.rpc('set_online', { p_user_id: data.user.id })
+      const { error: rpcErr } = await supabase.rpc('set_online', { p_user_id: data.user.id })
+      if (rpcErr) {
+        console.error('[set_online error]', rpcErr.code, rpcErr.message, rpcErr.details, rpcErr.hint)
+      } else {
+        console.log('[set_online] OK pour', data.user.id)
+      }
     }
 
     router.push('/feed')
