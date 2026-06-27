@@ -455,22 +455,16 @@ function MessagesContent() {
       })
 
     // Garder aussi le heartbeat postgres pour last_seen
+    // RPC SECURITY DEFINER : s'exécute avec les droits postgres, pas anon
     const upsert = async () => {
-      const { error } = await supabase.from('user_presence')
-        .upsert(
-          { user_id: userId, is_online: true, last_seen: new Date().toISOString() },
-          { onConflict: 'user_id' }   // clé primaire explicite pour le upsert
-        )
-      if (error) console.error('[Presence upsert error]', error)
+      await supabase.rpc('mark_user_online')
     }
     upsert()
     const interval = setInterval(upsert, PRESENCE_INTERVAL)
     const handleUnload = () => {
       presenceChannel.untrack()
-      supabase.from('user_presence').upsert(
-        { user_id: userId, is_online: false, last_seen: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      )
+      // Marquer offline via RPC
+      supabase.rpc('set_user_offline', { p_user_id: userId })
     }
     window.addEventListener('beforeunload', handleUnload)
 
@@ -569,13 +563,16 @@ function MessagesContent() {
       }
     }
     load()
-    supabase.from('messages').update({ status: 'delivered' })
-      .eq('conversation_id', activeId).neq('sender_id', userIdRef.current ?? '').eq('status', 'sent').then(() => {})
+    const uid = userIdRef.current
+    if (uid) {
+      supabase.from('messages').update({ status: 'delivered' })
+        .eq('conversation_id', activeId).neq('sender_id', uid).eq('status', 'sent').then(() => {})
+    }
   }, [activeId])
 
   /* ── markAllRead : récepteur → signal read vers expéditeur via UPDATE realtime ── */
   const markAllRead = useCallback(async () => {
-    if (!activeId || !userId) return
+    if (!activeId || !userId || userId.trim() === '') return
     await supabase.from('messages')
       .update({ status: 'read' })
       .eq('conversation_id', activeId)
