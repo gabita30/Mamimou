@@ -2,8 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Désirs — Rencontres exclusives',
-  description: 'Rencontres adultes exclusives',
+  title: 'Cosmos — Rencontres, amitié et amour',
+  description:
+    "Cosmos est un espace de rencontre bienveillant pour l'amitié, l'intimité et l'amour, sans racisme ni violence. Réservé aux 18 ans et plus.",
+  manifest: '/manifest.json',
+  themeColor: '#0D1B4B',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
