@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import ServiceWorkerRegister from './ServiceWorkerRegister'
 
 export const metadata: Metadata = {
   title: 'Cosmos — Rencontres, amitié et amour',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body style={{ margin: 0, backgroundColor: '#0D1B4B', color: 'white', fontFamily: "'Jost', sans-serif" }}>
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
