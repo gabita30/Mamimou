@@ -1,22 +1,32 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import PresentationPage from './PresentationPage'
 
 export default function RootPage() {
   const router = useRouter()
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      router.replace(session ? '/feed' : '/index')
+      if (session) {
+        router.replace('/feed')
+      } else {
+        setChecking(false)
+      }
     })
   }, [router])
 
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0D1B4B' }}>
-      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 300, color: '#C9A84C', letterSpacing: '0.1em' }}>
-        Désirs
-      </h1>
-    </div>
-  )
+  if (checking) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0D1B4B' }}>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 300, color: '#C9A84C', letterSpacing: '0.1em' }}>
+          Désirs
+        </h1>
+      </div>
+    )
+  }
+
+  return <PresentationPage />
 }
