@@ -430,21 +430,21 @@ function MessagesContent() {
         const state = presenceChannel.presenceState<{ user_id: string }>()
         const online = new Set<string>()
         Object.values(state).forEach(presences => {
-          presences.forEach((p: { user_id: string }) => online.add(p.user_id))
+          presences.forEach((p) => online.add(p.user_id))
         })
         setOnlineUsers(online)
       })
-      .on('presence', { event: 'join' }, ({ newPresences }) => {
+      .on('presence', { event: 'join' }, ({ newPresences }: { newPresences: { user_id: string }[] }) => {
         setOnlineUsers(prev => {
           const next = new Set(prev)
-          newPresences.forEach((p: { user_id: string }) => next.add(p.user_id))
+          newPresences.forEach((p) => next.add(p.user_id))
           return next
         })
       })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences: { user_id: string }[] }) => {
         setOnlineUsers(prev => {
           const next = new Set(prev)
-          leftPresences.forEach((p: { user_id: string }) => next.delete(p.user_id))
+          leftPresences.forEach((p) => next.delete(p.user_id))
           return next
         })
       })
