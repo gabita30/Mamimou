@@ -1,15 +1,27 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useInstallPrompt } from './hooks/useInstallPrompt'
 
 export default function PresentationPage() {
+  const { isInstallable, isInstalled, promptInstall } = useInstallPrompt()
+
   return (
     <main className="page">
       {/* HERO */}
       <section className="hero">
         <nav className="nav">
           <span className="brand">Cosmos</span>
-          <Link href="/login" className="nav-link">Se connecter</Link>
+          <div className="nav-actions">
+            {isInstalled ? (
+              <span className="install-badge">✓ Installé</span>
+            ) : isInstallable ? (
+              <button onClick={promptInstall} className="install-btn">
+                Installer l&apos;app
+              </button>
+            ) : null}
+            <Link href="/login" className="nav-link">Se connecter</Link>
+          </div>
         </nav>
 
         <div className="hero-content">
@@ -18,11 +30,11 @@ export default function PresentationPage() {
             <h1>
               Ici, chaque rencontre
               <br />
-              <span className="italic">est une étoile qui s'allume.</span>
+              <span className="italic">est une étoile qui s&apos;allume.</span>
             </h1>
             <p className="hero-sub">
-              Cosmos est un lieu de rencontre pensé pour l'amitié, l'intimité et
-              l'amour — sans jugement, sans violence, sans racisme. Juste des
+              Cosmos est un lieu de rencontre pensé pour l&apos;amitié, l&apos;intimité et
+              l&apos;amour — sans jugement, sans violence, sans racisme. Juste des
               personnes qui cherchent à se sentir moins seules et à partager
               un peu de joie.
             </p>
@@ -31,7 +43,7 @@ export default function PresentationPage() {
                 Rejoindre Cosmos
               </Link>
               <Link href="/login" className="btn-ghost">
-                J'ai déjà un compte
+                J&apos;ai déjà un compte
               </Link>
             </div>
             <p className="age-notice">Réservé aux personnes majeures (18 ans et plus)</p>
@@ -54,13 +66,13 @@ export default function PresentationPage() {
       {/* VALEURS */}
       <section className="values">
         <p className="section-eyebrow">Ce que nous portons</p>
-        <h2>Une communauté avant d'être une application</h2>
+        <h2>Une communauté avant d&apos;être une application</h2>
 
         <div className="values-grid">
           <div className="value-card">
-            <h3>Bienveillance d'abord</h3>
+            <h3>Bienveillance d&apos;abord</h3>
             <p>
-              Aucune place pour le racisme, la violence ou l'humiliation.
+              Aucune place pour le racisme, la violence ou l&apos;humiliation.
               Cosmos existe pour rapprocher, jamais pour diviser.
             </p>
           </div>
@@ -76,7 +88,7 @@ export default function PresentationPage() {
             <h3>Amitié, intimité, amour</h3>
             <p>
               Chacun vient avec ses envies du moment. Cosmos ne juge pas
-              ce que vous cherchez, tant que c'est vécu avec respect.
+              ce que vous cherchez, tant que c&apos;est vécu avec respect.
             </p>
           </div>
           <div className="value-card">
@@ -122,7 +134,7 @@ export default function PresentationPage() {
       {/* CTA FINAL */}
       <section className="final-cta">
         <h2>
-          Quelqu'un, quelque part sur Cosmos,
+          Quelqu&apos;un, quelque part sur Cosmos,
           <br />
           <span className="italic">attend une conversation comme la vôtre.</span>
         </h2>
@@ -159,6 +171,7 @@ export default function PresentationPage() {
           color: #c9a84c;
         }
 
+        /* NAV */
         .nav {
           display: flex;
           align-items: center;
@@ -170,6 +183,11 @@ export default function PresentationPage() {
           font-size: 1.6rem;
           letter-spacing: 0.15em;
           color: #c9a84c;
+        }
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
         .nav-link {
           color: #f5efe0;
@@ -184,7 +202,31 @@ export default function PresentationPage() {
           border-color: #c9a84c;
           color: #c9a84c;
         }
+        .install-btn {
+          background: transparent;
+          color: #c9a84c;
+          border: 1px solid #c9a84c;
+          padding: 8px 20px;
+          border-radius: 999px;
+          font-size: 0.95rem;
+          font-family: 'Jost', sans-serif;
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        .install-btn:hover {
+          background: #c9a84c;
+          color: #0d1b4b;
+        }
+        .install-badge {
+          font-size: 0.85rem;
+          color: #8a93b8;
+          border: 1px solid #3a4784;
+          padding: 8px 16px;
+          border-radius: 999px;
+          white-space: nowrap;
+        }
 
+        /* HERO */
         .hero {
           padding-bottom: 80px;
         }
@@ -261,6 +303,7 @@ export default function PresentationPage() {
           color: #6b7399;
         }
 
+        /* HERO VISUAL */
         .hero-visual {
           position: relative;
           flex: 1 1 320px;
@@ -284,6 +327,7 @@ export default function PresentationPage() {
           height: auto;
         }
 
+        /* VALUES */
         .values {
           max-width: 1100px;
           margin: 0 auto;
@@ -324,6 +368,7 @@ export default function PresentationPage() {
           margin: 0;
         }
 
+        /* HOW */
         .how {
           max-width: 900px;
           margin: 0 auto;
@@ -364,6 +409,7 @@ export default function PresentationPage() {
           line-height: 1.6;
         }
 
+        /* FINAL CTA */
         .final-cta {
           text-align: center;
           padding: 100px 6vw 120px;
@@ -375,6 +421,7 @@ export default function PresentationPage() {
           line-height: 1.3;
         }
 
+        /* FOOTER */
         .footer {
           display: flex;
           justify-content: space-between;
@@ -399,8 +446,15 @@ export default function PresentationPage() {
           .steps li {
             gap: 18px;
           }
+          .nav-actions {
+            gap: 8px;
+          }
+          .install-btn, .install-badge {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+          }
         }
       `}</style>
     </main>
   )
-      }
+}
