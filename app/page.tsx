@@ -8,7 +8,7 @@ export default function RootPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      router.replace(session ? '/feed' : '/login')
+      router.replace(session ? '/feed' : '/index')
     })
   }, [router])
 
