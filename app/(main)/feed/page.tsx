@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, type Profile } from '@/lib/supabase'
-import { useNotificationPrompt } from './hooks/useNotificationPrompt'
+import { useNotificationPrompt } from '@/app/hooks/useNotificationPrompt'
 
 const SWIPE_THRESHOLD = 90
 
