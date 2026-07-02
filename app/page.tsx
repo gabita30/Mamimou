@@ -22,7 +22,7 @@ export default function RootPage() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0D1B4B' }}>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 300, color: '#C9A84C', letterSpacing: '0.1em' }}>
-          Désirs
+          Rencontres, Amitiés et Amour 
         </h1>
       </div>
     )
