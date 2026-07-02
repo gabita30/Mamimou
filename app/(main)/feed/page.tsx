@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, type Profile } from '@/lib/supabase'
+import { useNotificationPrompt } from './hooks/useNotificationPrompt'
 
 const SWIPE_THRESHOLD = 90
 
@@ -17,6 +18,8 @@ export default function FeedPage() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const startPos = useRef({ x: 0, y: 0 })
+
+  const { isSubscribable, isSubscribed, isLoading: notifLoading, promptSubscribe } = useNotificationPrompt()
 
   useEffect(() => {
     const init = async () => {
@@ -135,9 +138,36 @@ export default function FeedPage() {
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.8rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.05em' }}>
           Désirs
         </h1>
-        <span style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
-          {profiles.length - currentIndex} profils
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {isSubscribed ? (
+            <span title="Notifications activées" style={{ fontSize: '1.1rem', color: '#C9A84C', opacity: 0.7 }}>🔔</span>
+          ) : isSubscribable ? (
+            <button
+              onClick={promptSubscribe}
+              disabled={notifLoading}
+              title="Activer les notifications"
+              style={{
+                background: 'rgba(201,168,76,0.12)',
+                border: '1px solid rgba(201,168,76,0.4)',
+                borderRadius: '50%',
+                width: '34px',
+                height: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1rem',
+                cursor: notifLoading ? 'default' : 'pointer',
+                opacity: notifLoading ? 0.6 : 1,
+                flexShrink: 0,
+              }}
+            >
+              🔔
+            </button>
+          ) : null}
+          <span style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
+            {profiles.length - currentIndex} profils
+          </span>
+        </div>
       </div>
 
       {/* Card stack */}
