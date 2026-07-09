@@ -113,6 +113,19 @@ export default function FeedPage() {
     cardTransition = 'transform 0.32s cubic-bezier(.55,0,1,.45)'
   }
 
+  // ── Layout racine en grid 3 lignes : header (auto) / carte (1fr) / actions (auto) ──
+  // Chaque zone a un espace réservé et fixe. La carte ne peut jamais déborder
+  // sur les boutons, quel que soit le contenu (image en cours de chargement,
+  // bio longue, etc.), car "auto" est calculé AVANT que "1fr" ne prenne le reste.
+  const rootGridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateRows: 'auto 1fr auto',
+    height: '100%', // 100% et non 100dvh : ce composant est rendu à l'intérieur
+                    // de <main> dans MainLayout, qui gère déjà le 100dvh global.
+    background: '#0D1B4B',
+    overflow: 'hidden',
+  }
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0D1B4B' }}>
       <p style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A84C', fontSize: '1.4rem', fontWeight: 300 }}>Chargement…</p>
@@ -120,7 +133,7 @@ export default function FeedPage() {
   )
 
   if (!current) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.25rem', padding: '2rem', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.25rem', padding: '2rem', textAlign: 'center', background: '#0D1B4B' }}>
       <div style={{ fontSize: '3.5rem' }}>✨</div>
       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, color: 'rgba(255,255,255,0.8)', margin: 0 }}>
         Vous avez tout exploré
@@ -132,9 +145,9 @@ export default function FeedPage() {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0D1B4B', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '1.25rem 1.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+    <div style={rootGridStyle}>
+      {/* Header — ligne "auto" : hauteur fixée par son contenu, jamais par la carte */}
+      <div style={{ padding: '1.25rem 1.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.8rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.05em' }}>
           Désirs
         </h1>
@@ -170,20 +183,22 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Card stack */}
-      <div style={{ flex: 1, position: 'relative', padding: '0 1rem', minHeight: 0 }}>
+      {/* Zone carte — ligne "1fr" : occupe tout l'espace restant, jamais plus.
+          min-height: 0 est indispensable dans une grid pour empêcher le contenu
+          (l'image notamment) de forcer la ligne à grandir au-delà de 1fr. */}
+      <div style={{ position: 'relative', padding: '0 1rem', minHeight: 0, overflow: 'hidden' }}>
         {afterNext && (
-          <div style={{ position: 'absolute', inset: '0 1rem', transform: 'scale(0.88) translateY(10%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 1 }}>
+          <div style={{ position: 'absolute', inset: 0, margin: '0 1rem', transform: 'scale(0.88) translateY(10%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 1 }}>
             <ProfileCard profile={afterNext} />
           </div>
         )}
         {next && (
-          <div style={{ position: 'absolute', inset: '0 1rem', transform: 'scale(0.94) translateY(5%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 2 }}>
+          <div style={{ position: 'absolute', inset: 0, margin: '0 1rem', transform: 'scale(0.94) translateY(5%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 2 }}>
             <ProfileCard profile={next} />
           </div>
         )}
         <div
-          style={{ position: 'absolute', inset: '0 1rem', transform: cardTransform, transition: cardTransition, borderRadius: '26px', overflow: 'hidden', zIndex: 10, cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', willChange: 'transform' }}
+          style={{ position: 'absolute', inset: 0, margin: '0 1rem', transform: cardTransform, transition: cardTransition, borderRadius: '26px', overflow: 'hidden', zIndex: 10, cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', willChange: 'transform' }}
           onMouseDown={e => onDragStart(e.clientX, e.clientY)}
           onMouseMove={e => onDragMove(e.clientX, e.clientY)}
           onMouseUp={onDragEnd}
@@ -198,8 +213,9 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ padding: '0.875rem 1.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+      {/* Boutons d'action — ligne "auto" : hauteur fixée par son contenu.
+          Ne peut jamais être recouverte par la carte, quelle que soit sa taille. */}
+      <div style={{ padding: '0.875rem 1.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => advance('left')} style={roundBtn('#f87171', 0.15)} title="Passer">✕</button>
         <button onClick={() => setSelectedProfile(current)} style={{ flex: 1, height: '50px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', color: 'white', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}>Voir le profil</button>
         <button onClick={() => handleMessage(current.id)} style={{ flex: 1, height: '50px', background: 'linear-gradient(135deg, #C9A84C, #E8C97A)', border: 'none', borderRadius: '25px', color: '#0D1B4B', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 600, fontFamily: "'Jost', sans-serif" }}>Message</button>
@@ -218,7 +234,12 @@ function ProfileCard({ profile }: { profile: Profile }) {
   return (
     <div style={{ width: '100%', height: '100%', background: 'linear-gradient(150deg, #1c3070, #0D1B4B)', position: 'relative' }}>
       {profile.avatar_url ? (
-        <img src={profile.avatar_url} alt="" draggable={false} style={{ width: '100%', height: '68%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }} />
+        <img
+          src={profile.avatar_url}
+          alt=""
+          draggable={false}
+          style={{ width: '100%', height: '68%', objectFit: 'cover', display: 'block', pointerEvents: 'none', position: 'absolute', top: 0, left: 0 }}
+        />
       ) : (
         <div style={{ width: '100%', height: '68%', background: 'linear-gradient(135deg, #1c3070, #2a4080)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '5rem', color: 'rgba(255,255,255,0.15)', fontWeight: 300 }}>{initials || '?'}</span>
