@@ -20,6 +20,9 @@ export type Profile = {
   avatar_url: string | null
   created_at: string
   updated_at: string
+  // Calculé côté vue (feed_public/feed_male/feed_female) : indique si
+  // l'utilisateur connecté (auth.uid()) a déjà liké ce profil.
+  is_liked: boolean
 }
 
 export type Message = {
