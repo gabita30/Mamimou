@@ -52,7 +52,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   if (!ready) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0D1B4B' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh', background: '#0D1B4B' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2.5rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.1em' }}>
             Désirs
@@ -66,8 +66,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: '480px', margin: '0 auto', position: 'relative', overflow: 'hidden' }}>
-      {/* Page content */}
-      <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Page content
+          minHeight: 0 est indispensable ici : dans un flex-column, un enfant
+          (FeedPage, MessagesPage, etc.) peut sinon forcer <main> à dépasser
+          l'espace réellement disponible (100dvh - hauteur de la nav du bas),
+          ce qui pousse la nav hors écran ou fait déborder le contenu par-dessus. */}
+      <main style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {children}
       </main>
 
