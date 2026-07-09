@@ -382,47 +382,28 @@ export default function FeedPage() {
   )
 }
 
-// ── ProfileCard : image complète (jamais rognée), fond flouté pour un rendu
-// professionnel et moderne. Affiche aussi un petit badge ♥ si déjà liké.
+// ── ProfileCard : image en plein cadre (object-fit: cover), comme à l'origine.
+// Affiche aussi un petit badge ♥ si déjà liké.
 function ProfileCard({ profile, liked }: { profile: Profile; liked: boolean }) {
   const initials = `${profile.first_name?.[0] ?? ''}${profile.last_name?.[0] ?? ''}`.toUpperCase()
   return (
     <div style={{ width: '100%', height: '100%', background: 'linear-gradient(150deg, #1c3070, #0D1B4B)', position: 'relative', overflow: 'hidden' }}>
       {profile.avatar_url ? (
-        <>
-          <img
-            src={profile.avatar_url}
-            alt=""
-            draggable={false}
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '68%',
-              objectFit: 'cover',
-              filter: 'blur(35px) brightness(0.55) saturate(1.1)',
-              transform: 'scale(1.35)',
-              pointerEvents: 'none',
-            }}
-          />
-          <img
-            src={profile.avatar_url}
-            alt=""
-            draggable={false}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '68%',
-              objectFit: 'contain',
-              display: 'block',
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.35))',
-            }}
-          />
-        </>
+        <img
+          src={profile.avatar_url}
+          alt=""
+          draggable={false}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '68%',
+            objectFit: 'cover',
+            display: 'block',
+            pointerEvents: 'none',
+          }}
+        />
       ) : (
         <div style={{ width: '100%', height: '68%', background: 'linear-gradient(135deg, #1c3070, #2a4080)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '5rem', color: 'rgba(255,255,255,0.15)', fontWeight: 300 }}>{initials || '?'}</span>
