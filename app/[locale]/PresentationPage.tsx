@@ -1,10 +1,13 @@
 'use client'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { useInstallPrompt } from './hooks/useInstallPrompt'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function PresentationPage() {
   const { isInstallable, isInstalled, promptInstall } = useInstallPrompt()
+  const t = useTranslations('Presentation')
 
   return (
     <main className="page">
@@ -14,39 +17,35 @@ export default function PresentationPage() {
           <span className="brand">Cosmos</span>
           <div className="nav-actions">
             {isInstalled ? (
-              <span className="install-badge">✓ Installé</span>
+              <span className="install-badge">✓ {t('nav.installed')}</span>
             ) : isInstallable ? (
               <button onClick={promptInstall} className="install-btn">
-                Installer l&apos;app
+                {t('nav.installApp')}
               </button>
             ) : null}
-            <Link href="/login" className="nav-link">Se connecter</Link>
+            <LanguageSwitcher />
+            <Link href="/login" className="nav-link">{t('nav.login')}</Link>
           </div>
         </nav>
 
         <div className="hero-content">
           <div className="hero-text">
-            <p className="eyebrow">Un espace pour se retrouver</p>
+            <p className="eyebrow">{t('hero.eyebrow')}</p>
             <h1>
-              Ici, chaque rencontre
+              {t('hero.titleLine1')}
               <br />
-              <span className="italic">est une étoile qui s&apos;allume.</span>
+              <span className="italic">{t('hero.titleLine2')}</span>
             </h1>
-            <p className="hero-sub">
-              Cosmos est un lieu de rencontre pensé pour l&apos;amitié, l&apos;intimité et
-              l&apos;amour — sans jugement, sans violence, sans racisme. Juste des
-              personnes qui cherchent à se sentir moins seules et à partager
-              un peu de joie.
-            </p>
+            <p className="hero-sub">{t('hero.subtitle')}</p>
             <div className="hero-actions">
               <Link href="/login?mode=signup" className="btn-primary">
-                Rejoindre Cosmos
+                {t('hero.joinCta')}
               </Link>
               <Link href="/login" className="btn-ghost">
-                J&apos;ai déjà un compte
+                {t('hero.loginCta')}
               </Link>
             </div>
-            <p className="age-notice">Réservé aux personnes majeures (18 ans et plus)</p>
+            <p className="age-notice">{t('hero.ageNotice')}</p>
           </div>
 
           <div className="hero-visual">
@@ -65,67 +64,54 @@ export default function PresentationPage() {
 
       {/* VALEURS */}
       <section className="values">
-        <p className="section-eyebrow">Ce que nous portons</p>
-        <h2>Une communauté avant d&apos;être une application</h2>
+        <p className="section-eyebrow">{t('values.eyebrow')}</p>
+        <h2>{t('values.title')}</h2>
 
         <div className="values-grid">
           <div className="value-card">
-            <h3>Bienveillance d&apos;abord</h3>
-            <p>
-              Aucune place pour le racisme, la violence ou l&apos;humiliation.
-              Cosmos existe pour rapprocher, jamais pour diviser.
-            </p>
+            <h3>{t('values.card1.title')}</h3>
+            <p>{t('values.card1.text')}</p>
           </div>
           <div className="value-card">
-            <h3>Contre la solitude</h3>
-            <p>
-              Beaucoup de personnes se sentent seules, même entourées.
-              Ici, on tend la main à des inconnus qui peuvent devenir
-              des amis, des confidents, ou plus.
-            </p>
+            <h3>{t('values.card2.title')}</h3>
+            <p>{t('values.card2.text')}</p>
           </div>
           <div className="value-card">
-            <h3>Amitié, intimité, amour</h3>
-            <p>
-              Chacun vient avec ses envies du moment. Cosmos ne juge pas
-              ce que vous cherchez, tant que c&apos;est vécu avec respect.
-            </p>
+            <h3>{t('values.card3.title')}</h3>
+            <p>{t('values.card3.text')}</p>
           </div>
           <div className="value-card">
-            <h3>Vivre ensemble</h3>
-            <p>
-              Nous croyons à la fraternité entre inconnus, au plaisir simple
-              de rencontrer une nouvelle personne et de nourrir son cœur.
-            </p>
+            <h3>{t('values.card4.title')}</h3>
+            <p>{t('values.card4.text')}</p>
           </div>
         </div>
       </section>
 
       {/* COMMENT ÇA MARCHE */}
       <section className="how">
-        <p className="section-eyebrow">Le chemin</p>
-        <h2>Trois pas pour ne plus être seul ce soir</h2>
+        <p className="section-eyebrow">{t('how.eyebrow')}</p>
+        <h2>{t('how.title')}</h2>
 
         <ol className="steps">
           <li>
             <span className="step-number">01</span>
             <div>
-              <h3>Créez votre profil</h3>
-              <p>Montrez qui vous êtes vraiment, à votre rythme.</p>
+              <h3>{t('how.step1.title')}</h3>
+              <p>{t('how.step1.text')}</p>
             </div>
           </li>
           <li>
             <span className="step-number">02</span>
             <div>
-              <h3>Découvrez des personnes</h3>
-              <p>Explorez des profils authentiques, sans filtre superficiel.</p>
+              <h3>{t('how.step2.title')}</h3>
+              <p>{t('how.step2.text')}</p>
             </div>
           </li>
           <li>
             <span className="step-number">03</span>
             <div>
-              <h3>Écrivez, rencontrez, aimez</h3>
-              <p>De la conversation à la rencontre, tout se construit à deux.</p>
+              <h3>{t('how.step3.title')}</h3>
+              <p>{t('how.step3.text')}</p>
             </div>
           </li>
         </ol>
@@ -134,18 +120,18 @@ export default function PresentationPage() {
       {/* CTA FINAL */}
       <section className="final-cta">
         <h2>
-          Quelqu&apos;un, quelque part sur Cosmos,
+          {t('finalCta.titleLine1')}
           <br />
-          <span className="italic">attend une conversation comme la vôtre.</span>
+          <span className="italic">{t('finalCta.titleLine2')}</span>
         </h2>
         <Link href="/login?mode=signup" className="btn-primary large">
-          Créer mon compte
+          {t('finalCta.cta')}
         </Link>
       </section>
 
       <footer className="footer">
         <span>Cosmos</span>
-        <span>© {new Date().getFullYear()} — Réservé aux 18 ans et plus</span>
+        <span>© {new Date().getFullYear()} — {t('footer.ageNotice')}</span>
       </footer>
 
       <style jsx>{`
