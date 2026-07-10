@@ -1,0 +1,234 @@
+{
+  "RootPage": {
+    "tagline": "Dating, Friendship and Love"
+  },
+  "Presentation": {
+    "nav": {
+      "installed": "Installed",
+      "installApp": "Install app",
+      "login": "Log in"
+    },
+    "hero": {
+      "eyebrow": "A space to connect",
+      "titleLine1": "Here, every encounter",
+      "titleLine2": "is a star lighting up.",
+      "subtitle": "Cosmos is a meeting place built for friendship, intimacy and love — no judgment, no violence, no racism. Just people looking to feel a little less alone and share some joy.",
+      "joinCta": "Join Cosmos",
+      "loginCta": "I already have an account",
+      "ageNotice": "For adults only (18 years and older)"
+    },
+    "values": {
+      "eyebrow": "What we stand for",
+      "title": "A community before it's an app",
+      "card1": {
+        "title": "Kindness first",
+        "text": "No room for racism, violence or humiliation. Cosmos exists to bring people together, never to divide."
+      },
+      "card2": {
+        "title": "Against loneliness",
+        "text": "Many people feel alone, even surrounded. Here, we reach out to strangers who can become friends, confidants, or more."
+      },
+      "card3": {
+        "title": "Friendship, intimacy, love",
+        "text": "Everyone comes with their own needs of the moment. Cosmos doesn't judge what you're looking for, as long as it's lived with respect."
+      },
+      "card4": {
+        "title": "Living together",
+        "text": "We believe in fellowship between strangers, in the simple pleasure of meeting someone new and nurturing the heart."
+      }
+    },
+    "how": {
+      "eyebrow": "The path",
+      "title": "Three steps to no longer feel alone tonight",
+      "step1": {
+        "title": "Create your profile",
+        "text": "Show who you really are, at your own pace."
+      },
+      "step2": {
+        "title": "Discover people",
+        "text": "Explore authentic profiles, without superficial filters."
+      },
+      "step3": {
+        "title": "Write, meet, love",
+        "text": "From conversation to meeting, everything is built together."
+      }
+    },
+    "finalCta": {
+      "titleLine1": "Someone, somewhere on Cosmos,",
+      "titleLine2": "is waiting for a conversation like yours.",
+      "cta": "Create my account"
+    },
+    "footer": {
+      "ageNotice": "For 18 years and older only"
+    }
+  },
+  "Signup": {
+    "brand": "Désirs",
+    "createAccount": "Create my account",
+    "step1": { "title": "Access & security" },
+    "step2": { "title": "My identity" },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "confirmPassword": "Confirm password",
+      "username": "Username",
+      "usernamePlaceholder": "@yourusername",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "gender": "Gender",
+      "bio": "Bio",
+      "bioPlaceholder": "A few words about you…",
+      "publicProfile": "Public profile"
+    },
+    "genders": {
+      "male": "Male",
+      "female": "Female",
+      "trans": "Transgender",
+      "nonBinary": "Non-binary",
+      "other": "Other"
+    },
+    "ageConfirmation": "I confirm I am <strong>18 years or older</strong> and accept the terms of use.",
+    "errors": {
+      "passwordMismatch": "Passwords do not match.",
+      "passwordDifferent": "Passwords do not match.",
+      "mustBeAdult": "You must confirm you are 18 or older.",
+      "signupFailed": "Signup failed."
+    },
+    "continueCta": "Continue →",
+    "creating": "Creating…",
+    "joinCta": "Join Désirs",
+    "alreadyMember": "Already a member?",
+    "login": "Log in"
+  },
+  "Login": {
+    "brand": "Désirs",
+    "tagline": "Exclusive dating",
+    "title": "Log in",
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password"
+    },
+    "errors": {
+      "loginFailed": "Login failed"
+    },
+    "connecting": "Logging in…",
+    "loginCta": "Log in",
+    "notMember": "Not a member yet?",
+    "join": "Join"
+  },
+  "MainLayout": {
+    "brand": "Désirs",
+    "nav": {
+      "discover": "Discover",
+      "messages": "Messages",
+      "profile": "Profile"
+    }
+  },
+  "Feed": {
+    "brand": "Désirs",
+    "loading": "Loading…",
+    "filterProfiles": "Filter profiles",
+    "previousProfile": "Previous profile",
+    "viewProfile": "View profile",
+    "message": "Message",
+    "like": "Like",
+    "removeLike": "Remove like",
+    "profilesCount": "{count, plural, =0 {No profiles} one {# profile} other {# profiles}}",
+    "feedLabels": {
+      "everyone": "Everyone",
+      "men": "Men",
+      "women": "Women"
+    },
+    "genders": {
+      "male": "Male",
+      "female": "Female",
+      "trans": "Trans",
+      "nonBinary": "Non-binary",
+      "other": "Other"
+    },
+    "notifications": {
+      "enabled": "Notifications enabled",
+      "enable": "Enable notifications"
+    },
+    "empty": {
+      "title": "You've explored it all",
+      "subtitle": "Come back later to discover new profiles.",
+      "backCta": "↺ Revisit previous profile"
+    },
+    "modal": {
+      "about": "About",
+      "sendMessage": "Send a message"
+    }
+  },
+  "Messages": {
+    "title": "Messages",
+    "loading": "Loading…",
+    "conversation": "Conversation",
+    "online": "Online",
+    "lastSeen": "Seen {time}",
+    "previousMessages": "Previous messages",
+    "startTheConversation": "Start the conversation",
+    "messagePlaceholder": "Message…",
+    "reply": "Reply",
+    "photo": "Photo",
+    "edited": "edited",
+    "startConversation": "Start conversation",
+    "noConversation": "No conversation",
+    "noConversationHint": "Discover profiles and send the first message",
+    "conversationsCount": "{count, plural, =0 {No conversations} one {# conversation} other {# conversations}}",
+    "dates": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "justNow": "just now",
+      "minutesAgo": "{count} min ago",
+      "hoursAgo": "{count} h ago"
+    }
+  },
+  "Profile": {
+    "title": "My profile",
+    "loading": "Loading…",
+    "logout": "Log out",
+    "tapToChange": "Tap to change",
+    "fields": {
+      "username": "Username",
+      "usernamePlaceholder": "@yourusername",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "gender": "Gender",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about yourself…",
+      "publicProfile": "Public profile",
+      "publicProfileHint": "Visible in the discovery feed"
+    },
+    "genders": {
+      "male": "Male",
+      "female": "Female",
+      "trans": "Transgender",
+      "nonBinary": "Non-binary",
+      "other": "Other"
+    },
+    "profileSaved": "Profile saved",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "save": "Save"
+  },
+  "Nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "messages": "Messages",
+    "settings": "Settings"
+  },
+  "HomePage": {
+    "title": "Welcome to Cosmos",
+    "subtitle": "Your next-generation social network",
+    "cta": "Get started"
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "fr": "French",
+    "en": "English"
+  }
+}
