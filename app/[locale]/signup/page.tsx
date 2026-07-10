@@ -1,22 +1,23 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { useRouter, Link } from '@/i18n/navigation'
 import { supabase } from '@/lib/supabase'
-
-const GENDER_OPTIONS = [
-  { value: 'male', label: 'Homme' },
-  { value: 'female', label: 'Femme' },
-  { value: 'trans', label: 'Transgenre' },
-  { value: 'non_binary', label: 'Non-binaire' },
-  { value: 'other', label: 'Autre' },
-]
 
 export default function SignupPage() {
   const router = useRouter()
+  const t = useTranslations('Signup')
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const GENDER_OPTIONS = [
+    { value: 'male', label: t('genders.male') },
+    { value: 'female', label: t('genders.female') },
+    { value: 'trans', label: t('genders.trans') },
+    { value: 'non_binary', label: t('genders.nonBinary') },
+    { value: 'other', label: t('genders.other') },
+  ]
 
   const [form, setForm] = useState({
     email: '', password: '', confirmPassword: '',
@@ -32,11 +33,11 @@ export default function SignupPage() {
     setError('')
 
     if (form.password !== form.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.')
+      setError(t('errors.passwordMismatch'))
       return
     }
     if (!form.adult) {
-      setError('Vous devez confirmer avoir 18 ans ou plus.')
+      setError(t('errors.mustBeAdult'))
       return
     }
 
@@ -48,7 +49,7 @@ export default function SignupPage() {
     })
 
     if (signUpError || !data.user) {
-      setError(signUpError?.message ?? "Erreur lors de l'inscription.")
+      setError(signUpError?.message ?? t('errors.signupFailed'))
       setLoading(false)
       return
     }
@@ -96,10 +97,10 @@ export default function SignupPage() {
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.12em' }}>
-            Désirs
+            {t('brand')}
           </p>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.68rem', letterSpacing: '0.3em', textTransform: 'uppercase', marginTop: '0.4rem' }}>
-            Créer mon compte
+            {t('createAccount')}
           </p>
         </div>
 
@@ -111,60 +112,62 @@ export default function SignupPage() {
 
         <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '28px', padding: '2.5rem 2rem' }}>
           <form onSubmit={step === 1
-            ? (e) => { e.preventDefault(); setError(''); if (form.password !== form.confirmPassword) { setError('Mots de passe différents.'); return } setStep(2) }
+            ? (e) => { e.preventDefault(); setError(''); if (form.password !== form.confirmPassword) { setError(t('errors.passwordDifferent')); return } setStep(2) }
             : handleSignup
           }>
             {step === 1 && (
               <>
                 <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, margin: '0 0 2rem', color: 'rgba(255,255,255,0.9)' }}>
-                  Accès & sécurité
+                  {t('step1.title')}
                 </h2>
-                <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" placeholder="vous@exemple.com" required />
-                <Field label="Mot de passe" value={form.password} onChange={v => set('password', v)} type="password" placeholder="Min. 8 caractères" required />
-                <Field label="Confirmer le mot de passe" value={form.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••" required />
+                <Field label={t('fields.email')} value={form.email} onChange={v => set('email', v)} type="email" placeholder={t('fields.emailPlaceholder')} required />
+                <Field label={t('fields.password')} value={form.password} onChange={v => set('password', v)} type="password" placeholder={t('fields.passwordPlaceholder')} required />
+                <Field label={t('fields.confirmPassword')} value={form.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••" required />
                 {error && <ErrorBox msg={error} />}
-                <button type="submit" style={btnGold}>Continuer →</button>
+                <button type="submit" style={btnGold}>{t('continueCta')}</button>
               </>
             )}
 
             {step === 2 && (
               <>
                 <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, margin: '0 0 2rem', color: 'rgba(255,255,255,0.9)' }}>
-                  Mon identité
+                  {t('step2.title')}
                 </h2>
-                <Field label="Pseudo" value={form.username} onChange={v => set('username', v)} placeholder="@monpseudo" />
+                <Field label={t('fields.username')} value={form.username} onChange={v => set('username', v)} placeholder={t('fields.usernamePlaceholder')} />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                   <div>
-                    <label style={lbl}>Prénom</label>
-                    <input value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Prénom" style={inp} onFocus={focusBorder} onBlur={blurBorder} />
+                    <label style={lbl}>{t('fields.firstName')}</label>
+                    <input value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder={t('fields.firstName')} style={inp} onFocus={focusBorder} onBlur={blurBorder} />
                   </div>
                   <div>
-                    <label style={lbl}>Nom</label>
-                    <input value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Nom" style={inp} onFocus={focusBorder} onBlur={blurBorder} />
+                    <label style={lbl}>{t('fields.lastName')}</label>
+                    <input value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder={t('fields.lastName')} style={inp} onFocus={focusBorder} onBlur={blurBorder} />
                   </div>
                 </div>
 
                 <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={lbl}>Genre</label>
+                  <label style={lbl}>{t('fields.gender')}</label>
                   <select value={form.gender} onChange={e => set('gender', e.target.value)} style={{ ...inp, appearance: 'none' as any }}>
                     {GENDER_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: '#0D1B4B' }}>{o.label}</option>)}
                   </select>
                 </div>
 
                 <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={lbl}>Bio</label>
-                  <textarea value={form.bio} onChange={e => set('bio', e.target.value)} rows={3} placeholder="Quelques mots sur vous…" style={{ ...inp, resize: 'vertical', fontFamily: "'Jost', sans-serif" }} onFocus={focusBorder} onBlur={blurBorder} />
+                  <label style={lbl}>{t('fields.bio')}</label>
+                  <textarea value={form.bio} onChange={e => set('bio', e.target.value)} rows={3} placeholder={t('fields.bioPlaceholder')} style={{ ...inp, resize: 'vertical', fontFamily: "'Jost', sans-serif" }} onFocus={focusBorder} onBlur={blurBorder} />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '0.875rem 1rem', marginBottom: '1.25rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>Profil public</span>
+                  <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>{t('fields.publicProfile')}</span>
                   <Toggle value={form.is_public} onChange={v => set('is_public', v)} />
                 </div>
 
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
                   <input type="checkbox" checked={form.adult} onChange={e => set('adult', e.target.checked)} style={{ marginTop: '2px', accentColor: '#C9A84C', width: '16px', height: '16px', flexShrink: 0 }} />
                   <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                    Je confirme avoir <strong style={{ color: 'rgba(255,255,255,0.8)' }}>18 ans ou plus</strong> et accepter les conditions d'utilisation.
+                    {t.rich('ageConfirmation', {
+                      strong: (chunks) => <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{chunks}</strong>,
+                    })}
                   </span>
                 </label>
 
@@ -173,7 +176,7 @@ export default function SignupPage() {
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button type="button" onClick={() => setStep(1)} style={{ ...btnGhost, flex: '0 0 auto' }}>←</button>
                   <button type="submit" disabled={loading} style={{ ...btnGold, flex: 1 }}>
-                    {loading ? 'Création…' : 'Rejoindre Désirs'}
+                    {loading ? t('creating') : t('joinCta')}
                   </button>
                 </div>
               </>
@@ -181,8 +184,8 @@ export default function SignupPage() {
           </form>
 
           <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
-            Déjà membre ?{' '}
-            <Link href="/login" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>Se connecter</Link>
+            {t('alreadyMember')}{' '}
+            <Link href="/login" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>{t('login')}</Link>
           </p>
         </div>
       </div>
