@@ -2,7 +2,9 @@
 import {
   useState, useEffect, useRef, useCallback, Suspense
 } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { useTranslations, useLocale } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { supabase, type Profile, type Message, type ConversationWithUser } from '@/lib/supabase'
 
 /* ─────────────────────────────────────────────
@@ -33,28 +35,31 @@ const ONLINE_THRESHOLD  = 120_000   // 2 min de marge (heartbeat = 20s)
 
 /* ─────────────────────────────────────────────
    HELPERS
+   Ces fonctions prennent maintenant `locale` en paramètre pour formater
+   les dates/heures dans la langue active (fr-FR / en-US) au lieu d'un
+   format français codé en dur.
 ───────────────────────────────────────────── */
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+const fmt = (iso: string, locale: string) =>
+  new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 
-const fmtDate = (iso: string) => {
+const fmtDate = (iso: string, locale: string, t: ReturnType<typeof useTranslations>) => {
   const d     = new Date(iso)
   const today = new Date()
-  if (d.toDateString() === today.toDateString()) return fmt(iso)
+  if (d.toDateString() === today.toDateString()) return fmt(iso, locale)
   const diff = Math.floor((today.getTime() - d.getTime()) / 86400000)
-  if (diff === 1) return 'Hier'
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+  if (diff === 1) return t('dates.yesterday')
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
 }
 
-const fmtLastSeen = (iso: string) => {
+const fmtLastSeen = (iso: string, locale: string, t: ReturnType<typeof useTranslations>) => {
   const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60_000)    return "à l'instant"
-  if (diff < 3600_000)  return `il y a ${Math.floor(diff / 60_000)} min`
-  if (diff < 86400_000) return `il y a ${Math.floor(diff / 3600_000)} h`
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+  if (diff < 60_000)    return t('dates.justNow')
+  if (diff < 3600_000)  return t('dates.minutesAgo', { count: Math.floor(diff / 60_000) })
+  if (diff < 86400_000) return t('dates.hoursAgo', { count: Math.floor(diff / 3600_000) })
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
 }
 
-const groupByDay = (msgs: ExtMessage[]) => {
+const groupByDay = (msgs: ExtMessage[], locale: string, t: ReturnType<typeof useTranslations>) => {
   const groups: { label: string; messages: ExtMessage[] }[] = []
   let current = ''
   msgs.forEach(m => {
@@ -62,9 +67,9 @@ const groupByDay = (msgs: ExtMessage[]) => {
     const today = new Date()
     const yest  = new Date(today); yest.setDate(yest.getDate() - 1)
     let label: string
-    if (d.toDateString() === today.toDateString())  label = "Aujourd'hui"
-    else if (d.toDateString() === yest.toDateString()) label = 'Hier'
-    else label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+    if (d.toDateString() === today.toDateString())  label = t('dates.today')
+    else if (d.toDateString() === yest.toDateString()) label = t('dates.yesterday')
+    else label = d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
     if (label !== current) { groups.push({ label, messages: [] }); current = label }
     groups[groups.length - 1].messages.push(m)
   })
@@ -163,11 +168,12 @@ function Avatar({ profile, size, online }: { profile: Profile; size: number; onl
 /* ─────────────────────────────────────────────
    CONV ROW
 ───────────────────────────────────────────── */
-function ConvRow({ conv, active, onClick, online, unread }: {
+function ConvRow({ conv, active, onClick, online, unread, locale, t }: {
   conv: ConversationWithUser; active: boolean; onClick: () => void; online?: boolean; unread?: boolean
+  locale: string; t: ReturnType<typeof useTranslations>
 }) {
   const [hover, setHover] = useState(false)
-  const preview = conv.last_message?.image_url ? '📷 Photo' : conv.last_message?.content ?? 'Démarrer la conversation'
+  const preview = conv.last_message?.image_url ? `📷 ${t('photo')}` : conv.last_message?.content ?? t('startConversation')
 
   return (
     <div
@@ -190,7 +196,7 @@ function ConvRow({ conv, active, onClick, online, unread }: {
             {conv.other_user.first_name} {conv.other_user.last_name}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.63rem', flexShrink: 0, marginLeft: '0.5rem' }}>
-            {conv.last_message ? fmtDate(conv.last_message.created_at) : ''}
+            {conv.last_message ? fmtDate(conv.last_message.created_at, locale, t) : ''}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -212,7 +218,7 @@ function ConvRow({ conv, active, onClick, online, unread }: {
 /* ─────────────────────────────────────────────
    REPLY PREVIEW BAR
 ───────────────────────────────────────────── */
-function ReplyPreview({ msg, onCancel }: { msg: ExtMessage; onCancel: () => void }) {
+function ReplyPreview({ msg, onCancel, t }: { msg: ExtMessage; onCancel: () => void; t: ReturnType<typeof useTranslations> }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -222,9 +228,9 @@ function ReplyPreview({ msg, onCancel }: { msg: ExtMessage; onCancel: () => void
       borderLeft: '3px solid rgba(201,168,76,0.5)',
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '0.68rem', color: '#C9A84C', fontWeight: 500, marginBottom: 2 }}>Répondre</p>
+        <p style={{ margin: 0, fontSize: '0.68rem', color: '#C9A84C', fontWeight: 500, marginBottom: 2 }}>{t('reply')}</p>
         <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {msg.image_url ? '📷 Photo' : msg.content}
+          {msg.image_url ? `📷 ${t('photo')}` : msg.content}
         </p>
       </div>
       <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.9rem', padding: '0.25rem', lineHeight: 1 }}>✕</button>
@@ -237,10 +243,12 @@ function ReplyPreview({ msg, onCancel }: { msg: ExtMessage; onCancel: () => void
 ───────────────────────────────────────────── */
 const REACTIONS_LIST = ['👍', '❤️', '😂', '😮', '😢']
 
-function MessageBubble({ msg, mine, onReply, onReact }: {
+function MessageBubble({ msg, mine, onReply, onReact, locale, t }: {
   msg: ExtMessage; mine: boolean
   onReply: (m: ExtMessage) => void
   onReact: (id: string, emoji: string) => void
+  locale: string
+  t: ReturnType<typeof useTranslations>
 }) {
   const [showActions, setShowActions] = useState(false)
   const isOptimistic = msg.id.toString().startsWith('optimistic-')
@@ -262,7 +270,7 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
           marginBottom: '2px',
         }}>
           <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.4 }}>
-            {msg.reply_to.image_url ? '📷 Photo' : msg.reply_to.content}
+            {msg.reply_to.image_url ? `📷 ${t('photo')}` : msg.reply_to.content}
           </p>
         </div>
       )}
@@ -339,9 +347,9 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
                 verticalAlign: 'bottom', lineHeight: 1,
                 clear: 'none',
               }}>
-                {msg.edited_at && <span style={{ fontSize: '0.55rem', opacity: 0.4, color: mine ? '#0D1B4B' : 'inherit' }}>modifié</span>}
+                {msg.edited_at && <span style={{ fontSize: '0.55rem', opacity: 0.4, color: mine ? '#0D1B4B' : 'inherit' }}>{t('edited')}</span>}
                 <span style={{ fontSize: '0.6rem', opacity: 0.5, whiteSpace: 'nowrap' }}>
-                  {isOptimistic ? '…' : fmt(msg.created_at)}
+                  {isOptimistic ? '…' : fmt(msg.created_at, locale)}
                 </span>
                 {mine && !isOptimistic && <StatusIcon status={msg.status} />}
               </span>
@@ -350,7 +358,7 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
           {/* Image sans texte : timestamp en dessous */}
           {msg.image_url && !msg.content && (
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '3px', alignItems: 'center', padding: '4px 2px 2px' }}>
-              <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>{isOptimistic ? '…' : fmt(msg.created_at)}</span>
+              <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>{isOptimistic ? '…' : fmt(msg.created_at, locale)}</span>
               {mine && !isOptimistic && <StatusIcon status={msg.status} />}
             </div>
           )}
@@ -385,6 +393,8 @@ function MessageBubble({ msg, mine, onReply, onReact }: {
 function MessagesContent() {
   const searchParams = useSearchParams()
   const router       = useRouter()
+  const locale       = useLocale()
+  const t            = useTranslations('Messages')
   const activeId     = searchParams.get('id')
 
   const [userId,        setUserId]        = useState<string | null>(null)
@@ -634,8 +644,8 @@ function MessagesContent() {
   /* ── Mark read dès l'entrée dans la conv ── */
   useEffect(() => {
     if (!activeId || !userId) return
-    const t = setTimeout(() => markAllRead(), 300)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => markAllRead(), 300)
+    return () => clearTimeout(timer)
   }, [activeId, userId, markAllRead])
 
   /* ── Mark read quand l'onglet reprend le focus ── */
@@ -733,7 +743,7 @@ function MessagesContent() {
   // onlineUsers = source WebSocket temps réel (prioritaire)
   // otherPresence = fallback postgres pour last_seen
   const isOnline = otherUser ? onlineUsers.has(otherUser.id) : false
-  const grouped       = groupByDay(messages)
+  const grouped       = groupByDay(messages, locale, t)
 
   /* ══════ CHAT VIEW ══════ */
   if (view === 'chat' && activeId) {
@@ -749,12 +759,12 @@ function MessagesContent() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 500, fontSize: '0.92rem', color: 'white' }}>{otherUser.first_name} {otherUser.last_name}</p>
                 <p style={{ margin: 0, fontSize: '0.68rem', color: isOnline ? '#22C55E' : 'rgba(255,255,255,0.28)', transition: 'color 0.3s' }}>
-                  {isOnline ? 'En ligne' : otherPresence ? `Vu ${fmtLastSeen(otherPresence.last_seen)}` : otherUser.username ? `@${otherUser.username}` : ''}
+                  {isOnline ? t('online') : otherPresence ? t('lastSeen', { time: fmtLastSeen(otherPresence.last_seen, locale, t) }) : otherUser.username ? `@${otherUser.username}` : ''}
                 </p>
               </div>
             </>
           ) : (
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>Conversation</p>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>{t('conversation')}</p>
           )}
         </div>
 
@@ -764,7 +774,7 @@ function MessagesContent() {
           {hasMore && (
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
               <button onClick={loadMore} disabled={loadingMore} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)', fontSize: '0.73rem', borderRadius: '20px', padding: '0.35rem 1rem', cursor: loadingMore ? 'default' : 'pointer' }}>
-                {loadingMore ? 'Chargement…' : 'Messages précédents'}
+                {loadingMore ? t('loading') : t('previousMessages')}
               </button>
             </div>
           )}
@@ -772,7 +782,7 @@ function MessagesContent() {
           {messages.length === 0 && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: 0.35 }}>
               <span style={{ fontSize: '2rem' }}>💬</span>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>Commencez la conversation</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{t('startTheConversation')}</p>
             </div>
           )}
 
@@ -785,7 +795,7 @@ function MessagesContent() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 {group.messages.map(msg => (
-                  <MessageBubble key={msg.id} msg={msg} mine={msg.sender_id === userId} onReply={setReplyTo} onReact={handleReact} />
+                  <MessageBubble key={msg.id} msg={msg} mine={msg.sender_id === userId} onReply={setReplyTo} onReact={handleReact} locale={locale} t={t} />
                 ))}
               </div>
             </div>
@@ -803,7 +813,7 @@ function MessagesContent() {
         </div>
 
         {/* Reply bar */}
-        {replyTo && <ReplyPreview msg={replyTo} onCancel={() => setReplyTo(null)} />}
+        {replyTo && <ReplyPreview msg={replyTo} onCancel={() => setReplyTo(null)} t={t} />}
 
         {/* Input */}
         <div style={{ padding: '0.6rem 1rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(6,14,40,0.98)', display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexShrink: 0 }}>
@@ -816,7 +826,7 @@ function MessagesContent() {
               type="text" value={text}
               onChange={e => handleTyping(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText() } }}
-              placeholder="Message…"
+              placeholder={t('messagePlaceholder')}
               style={{ flex: 1, background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: '0.88rem', outline: 'none', fontFamily: "'Jost', sans-serif", padding: '0.5rem 0' }}
             />
             <button onClick={sendText} disabled={sending || !text.trim()} style={{
@@ -836,24 +846,24 @@ function MessagesContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0A1535', fontFamily: "'Jost', sans-serif" }}>
       <div style={{ padding: '1.5rem 1.5rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.75rem', fontWeight: 300, margin: 0, color: '#C9A84C', letterSpacing: '0.02em' }}>Messages</h1>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.75rem', fontWeight: 300, margin: 0, color: '#C9A84C', letterSpacing: '0.02em' }}>{t('title')}</h1>
         <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: 'rgba(255,255,255,0.22)' }}>
-          {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
+          {t('conversationsCount', { count: conversations.length })}
         </p>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}>
         {conversations.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.875rem', padding: '2rem', textAlign: 'center' }}>
             <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem' }}>💬</div>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.1rem', fontWeight: 300, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Aucune conversation</p>
-            <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: '0.76rem', margin: 0, maxWidth: 200, lineHeight: 1.5 }}>Découvrez des profils et envoyez le premier message</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.1rem', fontWeight: 300, color: 'rgba(255,255,255,0.45)', margin: 0 }}>{t('noConversation')}</p>
+            <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: '0.76rem', margin: 0, maxWidth: 200, lineHeight: 1.5 }}>{t('noConversationHint')}</p>
           </div>
         ) : (
           conversations.map(conv => {
             const pres   = conv.other_user ? presence[conv.other_user.id] : undefined
             // Source WebSocket temps réel
             const online = conv.other_user ? onlineUsers.has(conv.other_user.id) : false
-            return <ConvRow key={conv.id} conv={conv} active={conv.id === activeId} onClick={() => openConv(conv.id)} online={online} />
+            return <ConvRow key={conv.id} conv={conv} active={conv.id === activeId} onClick={() => openConv(conv.id)} online={online} locale={locale} t={t} />
           })
         )}
       </div>
@@ -866,16 +876,21 @@ function MessagesContent() {
 ───────────────────────────────────────────── */
 export default function MessagesPage() {
   return (
-    <Suspense fallback={
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0A1535' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.25)', borderTopColor: '#C9A84C', margin: '0 auto 1rem', animation: 'spin 0.8s linear infinite' }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: "'Jost', sans-serif", fontSize: '0.82rem', margin: 0 }}>Chargement…</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<MessagesFallback />}>
       <MessagesContent />
     </Suspense>
+  )
+}
+
+function MessagesFallback() {
+  const t = useTranslations('Messages')
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0A1535' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.25)', borderTopColor: '#C9A84C', margin: '0 auto 1rem', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: "'Jost', sans-serif", fontSize: '0.82rem', margin: 0 }}>{t('loading')}</p>
+      </div>
+    </div>
   )
 }
