@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { supabase, type Profile } from '@/lib/supabase'
 import { useNotificationPrompt } from '@/app/hooks/useNotificationPrompt'
 
@@ -9,14 +10,16 @@ const MAX_HISTORY = 10
 
 type FeedTable = 'feed_public' | 'feed_male' | 'feed_female'
 
-const FEED_LABELS: Record<FeedTable, string> = {
-  feed_public: 'Tout le monde',
-  feed_male: 'Hommes',
-  feed_female: 'Femmes',
-}
-
 export default function FeedPage() {
   const router = useRouter()
+  const t = useTranslations('Feed')
+
+  const FEED_LABELS: Record<FeedTable, string> = {
+    feed_public: t('feedLabels.everyone'),
+    feed_male: t('feedLabels.men'),
+    feed_female: t('feedLabels.women'),
+  }
+
   const [feedTable, setFeedTable] = useState<FeedTable>('feed_public')
   const [feedMenuOpen, setFeedMenuOpen] = useState(false)
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -196,9 +199,20 @@ export default function FeedPage() {
     overflow: 'hidden',
   }
 
+  const genderLabel = (gender: string) => {
+    const map: Record<string, string> = {
+      male: t('genders.male'),
+      female: t('genders.female'),
+      trans: t('genders.trans'),
+      non_binary: t('genders.nonBinary'),
+      other: t('genders.other'),
+    }
+    return map[gender] ?? gender
+  }
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0D1B4B' }}>
-      <p style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A84C', fontSize: '1.4rem', fontWeight: 300 }}>Chargement…</p>
+      <p style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A84C', fontSize: '1.4rem', fontWeight: 300 }}>{t('loading')}</p>
     </div>
   )
 
@@ -206,17 +220,17 @@ export default function FeedPage() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.25rem', padding: '2rem', textAlign: 'center', background: '#0D1B4B' }}>
       <div style={{ fontSize: '3.5rem' }}>✨</div>
       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, color: 'rgba(255,255,255,0.8)', margin: 0 }}>
-        Vous avez tout exploré
+        {t('empty.title')}
       </p>
       <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', margin: 0 }}>
-        Revenez plus tard pour découvrir de nouveaux profils.
+        {t('empty.subtitle')}
       </p>
       {history.length > 0 && (
         <button
           onClick={goBack}
           style={{ marginTop: '0.5rem', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '100px', padding: '0.6rem 1.4rem', color: '#C9A84C', fontSize: '0.8rem', letterSpacing: '0.08em', cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}
         >
-          ↺ Revoir le profil précédent
+          {t('empty.backCta')}
         </button>
       )}
     </div>
@@ -227,16 +241,16 @@ export default function FeedPage() {
       {/* Header */}
       <div style={{ padding: '1.25rem 1.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.8rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.05em' }}>
-          Désirs
+          {t('brand')}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           {isSubscribed ? (
-            <span title="Notifications activées" style={{ fontSize: '1.1rem', color: '#C9A84C', opacity: 0.7 }}>🔔</span>
+            <span title={t('notifications.enabled')} style={{ fontSize: '1.1rem', color: '#C9A84C', opacity: 0.7 }}>🔔</span>
           ) : isSubscribable ? (
             <button
               onClick={promptSubscribe}
               disabled={notifLoading}
-              title="Activer les notifications"
+              title={t('notifications.enable')}
               style={{
                 background: 'rgba(201,168,76,0.12)',
                 border: '1px solid rgba(201,168,76,0.4)',
@@ -260,7 +274,7 @@ export default function FeedPage() {
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setFeedMenuOpen(o => !o)}
-              title="Filtrer les profils"
+              title={t('filterProfiles')}
               style={{
                 background: 'rgba(201,168,76,0.12)',
                 border: '1px solid rgba(201,168,76,0.4)',
@@ -322,7 +336,7 @@ export default function FeedPage() {
           </div>
 
           <span style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
-            {profiles.length - currentIndex} profils
+            {t('profilesCount', { count: profiles.length - currentIndex })}
           </span>
         </div>
       </div>
@@ -331,12 +345,12 @@ export default function FeedPage() {
       <div style={{ position: 'relative', padding: '0 1rem', minHeight: 0, overflow: 'hidden' }}>
         {afterNext && (
           <div style={{ position: 'absolute', inset: 0, margin: '0 1rem', transform: 'scale(0.88) translateY(10%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 1 }}>
-            <ProfileCard profile={afterNext} liked={likedOverrides[afterNext.id] ?? afterNext.is_liked} />
+            <ProfileCard profile={afterNext} liked={likedOverrides[afterNext.id] ?? afterNext.is_liked} genderLabel={genderLabel} />
           </div>
         )}
         {next && (
           <div style={{ position: 'absolute', inset: 0, margin: '0 1rem', transform: 'scale(0.94) translateY(5%)', transformOrigin: 'center bottom', borderRadius: '26px', overflow: 'hidden', zIndex: 2 }}>
-            <ProfileCard profile={next} liked={likedOverrides[next.id] ?? next.is_liked} />
+            <ProfileCard profile={next} liked={likedOverrides[next.id] ?? next.is_liked} genderLabel={genderLabel} />
           </div>
         )}
         <div
@@ -349,7 +363,7 @@ export default function FeedPage() {
           onTouchMove={e => { e.preventDefault(); onDragMove(e.touches[0].clientX) }}
           onTouchEnd={onDragEnd}
         >
-          <ProfileCard profile={current} liked={isCurrentLiked} />
+          <ProfileCard profile={current} liked={isCurrentLiked} genderLabel={genderLabel} />
         </div>
       </div>
 
@@ -359,24 +373,24 @@ export default function FeedPage() {
           onClick={goBack}
           disabled={history.length === 0}
           style={roundBtn('#C9A84C', history.length === 0 ? 0.05 : 0.15, history.length === 0)}
-          title="Profil précédent"
+          title={t('previousProfile')}
         >
           ↺
         </button>
-        <button onClick={() => setSelectedProfile(current)} style={{ flex: 1, height: '50px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', color: 'white', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}>Voir le profil</button>
-        <button onClick={() => handleMessage(current.id)} style={{ flex: 1, height: '50px', background: 'linear-gradient(135deg, #C9A84C, #E8C97A)', border: 'none', borderRadius: '25px', color: '#0D1B4B', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 600, fontFamily: "'Jost', sans-serif" }}>Message</button>
+        <button onClick={() => setSelectedProfile(current)} style={{ flex: 1, height: '50px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', color: 'white', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: "'Jost', sans-serif" }}>{t('viewProfile')}</button>
+        <button onClick={() => handleMessage(current.id)} style={{ flex: 1, height: '50px', background: 'linear-gradient(135deg, #C9A84C, #E8C97A)', border: 'none', borderRadius: '25px', color: '#0D1B4B', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 600, fontFamily: "'Jost', sans-serif" }}>{t('message')}</button>
         <button
           onClick={() => toggleLike(current)}
           disabled={likeBusy}
           style={roundBtn('#4ade80', isCurrentLiked ? 0.85 : 0.15, likeBusy)}
-          title={isCurrentLiked ? "Retirer le j'aime" : "J'aime"}
+          title={isCurrentLiked ? t('removeLike') : t('like')}
         >
           {isCurrentLiked ? '♥' : '♡'}
         </button>
       </div>
 
       {selectedProfile && (
-        <ProfileModal profile={selectedProfile} onClose={() => setSelectedProfile(null)} onMessage={id => { handleMessage(id); setSelectedProfile(null) }} />
+        <ProfileModal profile={selectedProfile} onClose={() => setSelectedProfile(null)} onMessage={id => { handleMessage(id); setSelectedProfile(null) }} genderLabel={genderLabel} t={t} />
       )}
     </div>
   )
@@ -384,7 +398,7 @@ export default function FeedPage() {
 
 // ── ProfileCard : image en plein cadre (object-fit: cover), comme à l'origine.
 // Affiche aussi un petit badge ♥ si déjà liké.
-function ProfileCard({ profile, liked }: { profile: Profile; liked: boolean }) {
+function ProfileCard({ profile, liked, genderLabel }: { profile: Profile; liked: boolean; genderLabel: (g: string) => string }) {
   const initials = `${profile.first_name?.[0] ?? ''}${profile.last_name?.[0] ?? ''}`.toUpperCase()
   return (
     <div style={{ width: '100%', height: '100%', background: 'linear-gradient(150deg, #1c3070, #0D1B4B)', position: 'relative', overflow: 'hidden' }}>
@@ -431,7 +445,13 @@ function ProfileCard({ profile, liked }: { profile: Profile; liked: boolean }) {
   )
 }
 
-function ProfileModal({ profile, onClose, onMessage }: { profile: Profile; onClose: () => void; onMessage: (id: string) => void }) {
+function ProfileModal({ profile, onClose, onMessage, genderLabel, t }: {
+  profile: Profile
+  onClose: () => void
+  onMessage: (id: string) => void
+  genderLabel: (g: string) => string
+  t: ReturnType<typeof useTranslations>
+}) {
   const initials = `${profile.first_name?.[0] ?? ''}${profile.last_name?.[0] ?? ''}`.toUpperCase()
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
@@ -451,19 +471,14 @@ function ProfileModal({ profile, onClose, onMessage }: { profile: Profile; onClo
         </div>
         {profile.bio && (
           <div style={{ marginBottom: '2rem' }}>
-            <p style={{ fontSize: '0.65rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '0.6rem' }}>À propos</p>
+            <p style={{ fontSize: '0.65rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '0.6rem' }}>{t('modal.about')}</p>
             <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, fontSize: '0.9rem', margin: 0 }}>{profile.bio}</p>
           </div>
         )}
-        <button onClick={() => onMessage(profile.id)} style={{ width: '100%', background: 'linear-gradient(135deg, #C9A84C, #E8C97A)', color: '#0D1B4B', fontWeight: 600, padding: '1rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '0.05em', fontFamily: "'Jost', sans-serif" }}>Envoyer un message</button>
+        <button onClick={() => onMessage(profile.id)} style={{ width: '100%', background: 'linear-gradient(135deg, #C9A84C, #E8C97A)', color: '#0D1B4B', fontWeight: 600, padding: '1rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.9rem', letterSpacing: '0.05em', fontFamily: "'Jost', sans-serif" }}>{t('modal.sendMessage')}</button>
       </div>
     </div>
   )
-}
-
-function genderLabel(gender: string) {
-  const map: Record<string, string> = { male: 'Homme', female: 'Femme', trans: 'Trans', non_binary: 'Non-binaire', other: 'Autre' }
-  return map[gender] ?? gender
 }
 
 function roundBtn(color: string, alpha: number, disabled = false): React.CSSProperties {
