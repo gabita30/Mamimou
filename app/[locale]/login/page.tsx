@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { useRouter, Link } from '@/i18n/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const t = useTranslations('Login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +20,7 @@ export default function LoginPage() {
     const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
 
     if (err || !data.session) {
-      setError(err?.message ?? 'Erreur de connexion')
+      setError(err?.message ?? t('errors.loginFailed'))
       setLoading(false)
       return
     }
@@ -52,31 +53,31 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '420px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3.5rem', fontWeight: 300, color: '#C9A84C', margin: 0, letterSpacing: '0.12em', lineHeight: 1 }}>
-            Désirs
+            {t('brand')}
           </p>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', letterSpacing: '0.3em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
-            Rencontres exclusives
+            {t('tagline')}
           </p>
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '28px', padding: '2.5rem 2rem' }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.6rem', fontWeight: 300, margin: '0 0 2rem', color: 'rgba(255,255,255,0.9)' }}>
-            Connexion
+            {t('title')}
           </h2>
 
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={labelStyle}>Email</label>
+              <label style={labelStyle}>{t('fields.email')}</label>
               <input
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
-                required placeholder="vous@exemple.com" style={inputStyle}
+                required placeholder={t('fields.emailPlaceholder')} style={inputStyle}
                 onFocus={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
                 onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)')}
               />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={labelStyle}>Mot de passe</label>
+              <label style={labelStyle}>{t('fields.password')}</label>
               <input
                 type="password" value={password} onChange={e => setPassword(e.target.value)}
                 required placeholder="••••••••" style={inputStyle}
@@ -99,13 +100,13 @@ export default function LoginPage() {
               cursor: loading ? 'default' : 'pointer', transition: 'opacity 0.2s',
               fontFamily: "'Jost', sans-serif",
             }}>
-              {loading ? 'Connexion…' : 'Se connecter'}
+              {loading ? t('connecting') : t('loginCta')}
             </button>
           </form>
 
           <p style={{ textAlign: 'center', marginTop: '1.75rem', color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>
-            Pas encore membre ?{' '}
-            <Link href="/signup" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>Rejoindre</Link>
+            {t('notMember')}{' '}
+            <Link href="/signup" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 500 }}>{t('join')}</Link>
           </p>
         </div>
       </div>
