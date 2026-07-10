@@ -1,15 +1,8 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { supabase, type Profile } from '@/lib/supabase'
-
-const GENDER_OPTIONS = [
-  { value: 'male', label: 'Homme' },
-  { value: 'female', label: 'Femme' },
-  { value: 'trans', label: 'Transgenre' },
-  { value: 'non_binary', label: 'Non-binaire' },
-  { value: 'other', label: 'Autre' },
-]
 
 type Form = {
   username: string
@@ -22,6 +15,7 @@ type Form = {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const t = useTranslations('Profile')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [form, setForm] = useState<Form>({ username: '', first_name: '', last_name: '', bio: '', gender: 'female', is_public: true })
   const [loading, setLoading] = useState(true)
@@ -30,6 +24,14 @@ export default function ProfilePage() {
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const GENDER_OPTIONS = [
+    { value: 'male', label: t('genders.male') },
+    { value: 'female', label: t('genders.female') },
+    { value: 'trans', label: t('genders.trans') },
+    { value: 'non_binary', label: t('genders.nonBinary') },
+    { value: 'other', label: t('genders.other') },
+  ]
 
   useEffect(() => {
     const load = async () => {
@@ -120,7 +122,7 @@ export default function ProfilePage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0D1B4B' }}>
-      <p style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A84C', fontSize: '1.4rem', fontWeight: 300 }}>Chargement…</p>
+      <p style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A84C', fontSize: '1.4rem', fontWeight: 300 }}>{t('loading')}</p>
     </div>
   )
 
@@ -131,13 +133,13 @@ export default function ProfilePage() {
       {/* Header */}
       <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'rgba(13,27,75,0.95)', backdropFilter: 'blur(12px)', zIndex: 10 }}>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.8rem', fontWeight: 300, margin: 0, color: '#C9A84C' }}>
-          Mon profil
+          {t('title')}
         </h1>
         <button
           onClick={handleLogout}
           style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', color: '#f87171', borderRadius: '10px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontSize: '0.78rem', fontFamily: "'Jost', sans-serif", letterSpacing: '0.05em' }}
         >
-          Déconnexion
+          {t('logout')}
         </button>
       </div>
 
@@ -170,22 +172,22 @@ export default function ProfilePage() {
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleAvatarUpload(f) }} />
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}>
-            Appuyer pour changer
+            {t('tapToChange')}
           </p>
         </div>
 
         {/* Fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <FormField label="Pseudo" value={form.username} onChange={v => set('username', v)} placeholder="@monpseudo" />
+          <FormField label={t('fields.username')} value={form.username} onChange={v => set('username', v)} placeholder={t('fields.usernamePlaceholder')} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <FormField label="Prénom" value={form.first_name} onChange={v => set('first_name', v)} placeholder="Prénom" />
-            <FormField label="Nom" value={form.last_name} onChange={v => set('last_name', v)} placeholder="Nom" />
+            <FormField label={t('fields.firstName')} value={form.first_name} onChange={v => set('first_name', v)} placeholder={t('fields.firstName')} />
+            <FormField label={t('fields.lastName')} value={form.last_name} onChange={v => set('last_name', v)} placeholder={t('fields.lastName')} />
           </div>
 
           {/* Genre */}
           <div>
-            <label style={lbl}>Genre</label>
+            <label style={lbl}>{t('fields.gender')}</label>
             <select
               value={form.gender}
               onChange={e => set('gender', e.target.value)}
@@ -199,12 +201,12 @@ export default function ProfilePage() {
 
           {/* Bio */}
           <div>
-            <label style={lbl}>Bio</label>
+            <label style={lbl}>{t('fields.bio')}</label>
             <textarea
               value={form.bio}
               onChange={e => set('bio', e.target.value)}
               rows={4}
-              placeholder="Parlez-nous de vous…"
+              placeholder={t('fields.bioPlaceholder')}
               style={{ ...inp, resize: 'vertical', fontFamily: "'Jost', sans-serif", lineHeight: 1.6 }}
               onFocus={focusBorder}
               onBlur={blurBorder}
@@ -214,9 +216,9 @@ export default function ProfilePage() {
           {/* Public toggle */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', padding: '1rem 1.125rem', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div>
-              <p style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>Profil public</p>
+              <p style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>{t('fields.publicProfile')}</p>
               <p style={{ margin: '0.15rem 0 0', color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>
-                Visible dans le fil de découverte
+                {t('fields.publicProfileHint')}
               </p>
             </div>
             <Toggle value={form.is_public} onChange={v => set('is_public', v)} />
@@ -230,7 +232,7 @@ export default function ProfilePage() {
           )}
           {status === 'saved' && (
             <div style={{ padding: '0.75rem 1rem', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '12px', color: '#86efac', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>✓</span> Profil sauvegardé
+              <span>✓</span> {t('profileSaved')}
             </div>
           )}
 
@@ -257,7 +259,7 @@ export default function ProfilePage() {
               marginTop: '0.25rem',
             }}
           >
-            {saving ? 'Sauvegarde…' : status === 'saved' ? '✓ Sauvegardé' : 'Sauvegarder'}
+            {saving ? t('saving') : status === 'saved' ? `✓ ${t('saved')}` : t('save')}
           </button>
         </div>
       </div>
